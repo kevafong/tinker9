@@ -15,7 +15,7 @@ protected:
    static int target_node;
    static MDI_Comm mdi_comm;
    static bool exit_flag;
-   double bohrA_conv = 0.529177249; // 1 bohr = 0.529177249 angstroms
+   
 public:
    static void initialize(std::FILE* o);
    static void mdi_commands();
