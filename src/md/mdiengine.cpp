@@ -91,6 +91,7 @@ void MDIEngine::run_mdi(const char* node)
   int exists;
   int is_initialized = 0;
   double bohrA_conv = 0.529177249; // 1 bohr = 0.529177249 angstroms
+  double hartreekcal_conv = 627.503; // 1 hartree = 627.503 kcal/mol
   
   // Check if MDI is initialized
   ret = MDI_Initialized(&is_initialized);
@@ -146,8 +147,10 @@ void MDIEngine::run_mdi(const char* node)
         coords[3*i + 1]= y[i] / bohrA_conv;
         coords[3*i + 2]= z[i] / bohrA_conv;
       }
-      mdiprint("coords  in tinker: \n");
-      for (int i=0; i< 3*n; i++)  mdiprint("%f\n", coords[i]);
+
+
+      // mdiprint("coords  in tinker: \n");
+      // for (int i=0; i< 3*n; i++)  mdiprint("%f\n", coords[i]);
 
 
       // units should be in Bohr not Angstroms, 1.22something
@@ -168,9 +171,9 @@ void MDIEngine::run_mdi(const char* node)
       double forces[n*3];
       
       for (int i=0; i<n ; i++)  {
-        forces[3*i]= - gx[i];
-        forces[3*i + 1]= - gy[i];
-        forces[3*i + 2]= - gz[i];
+        forces[3*i]= - gx[i] * bohrA_conv / hartreekcal_conv;
+        forces[3*i + 1]= - gy[i] * bohrA_conv / hartreekcal_conv;
+        forces[3*i + 2]= - gz[i] * bohrA_conv / hartreekcal_conv;
       }
       // units should be in atomic units. (something/angstrom)
       ret = MDI_Send(forces, n * 3, MDI_DOUBLE, mdi_comm);
@@ -178,12 +181,14 @@ void MDIEngine::run_mdi(const char* node)
     else if ( strcmp(command, ">FORCES") == 0 ) {
       double recv_forces[n*3];
       // units should be in atomic units. (something/angstrom)
+      // presumable (energy/unit distance)
+      //QE is in hartree for energy
       ret = MDI_Recv(recv_forces, n * 3, MDI_DOUBLE, mdi_comm);
 
       for (int i=0; i<n ; i++)  {
-        gx[i] = - recv_forces[3*i];
-        gy[i] = - recv_forces[3*i + 1];
-        gz[i] = - recv_forces[3*i + 2];
+        gx[i] = - recv_forces[3*i] * hartreekcal_conv / bohrA_conv;
+        gy[i] = - recv_forces[3*i + 1] * hartreekcal_conv / bohrA_conv;
+        gz[i] = - recv_forces[3*i + 2] * hartreekcal_conv / bohrA_conv;
       }
     }
     else if ( strcmp(command, "<MASSES") == 0 ) {
@@ -193,14 +198,17 @@ void MDIEngine::run_mdi(const char* node)
       ret = MDI_Recv(mass, n, MDI_DOUBLE, mdi_comm);
     }
     else if ( strcmp(command, "<PE") == 0 ) {
+      //double potential = epot / hartreekcal_conv;
       ret = MDI_Send(&esum, 1, MDI_DOUBLE, mdi_comm);
     }
     else if ( strcmp(command, "<KE") == 0 ) {
+      double kinetic = eksum / hartreekcal_conv;
       ret = MDI_Send(&eksum, 1, MDI_DOUBLE, mdi_comm);
     }
     else if ( strcmp(command, "<ENERGY") == 0 ) {
-      double mdi_energy= esum + eksum;
-      ret = MDI_Send(&mdi_energy, 1, MDI_DOUBLE, mdi_comm);
+      double total_energy= esum + eksum;
+      total_energy = total_energy / hartreekcal_conv;
+      ret = MDI_Send(&total_energy, 1, MDI_DOUBLE, mdi_comm);
     }
     else if ( strcmp(command, "@INIT_MD") == 0 ) {
       break;

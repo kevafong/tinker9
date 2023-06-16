@@ -57,7 +57,6 @@ static void mdsaveDupThenWrite(int istep, time_prec dt)
    // Of course this is not a problem if the computer has only one GPU card.
    check_rt(cudaSetDevice(idevice));
 #endif
-
    // duplicate
 
    dup_buf_esum = esum;
@@ -90,7 +89,6 @@ static void mdsaveDupThenWrite(int istep, time_prec dt)
    mtx_dup.unlock();
 
    // get gpu buffer and write to external files
-
    energy_prec epot = dup_buf_esum;
    boxSetTinker(dup_buf_box);
    if (sizeof(pos_prec) == sizeof(double)) {
@@ -158,7 +156,6 @@ static void mdsaveDupThenWrite(int istep, time_prec dt)
    check_rt(cudaEventRecord(mdsave_end_event, g::s1));
    check_rt(cudaStreamWaitEvent(g::s0, mdsave_end_event, 0));
 #endif
-
    double dt1 = dt;
    double epot1 = epot;
    double eksum1 = eksum;
@@ -177,7 +174,6 @@ void mdsaveAsync(int istep, time_prec dt)
    std::unique_lock<std::mutex> lck_write(mtx_write);
    cv_write.wait(lck_write, [=]() { return idle_write; });
    idle_write = false;
-
    fut_dup_then_write = std::async(std::launch::async, mdsaveDupThenWrite,
       istep, dt);
 

@@ -84,7 +84,8 @@ void BasicIntegrator::dynamic(int istep, time_prec dt)
    time_prec dt2 = dt * 0.5;
 
    MDIEngine::mdiprint("The integrator is on step: %d\n",istep);
-
+   MDIEngine::mdiprint("AT1  POTENTIAL ENERGY IN dynamic, %f\n", esum);
+   MDIEngine::mdiprint("AT1  VERS IN dynamic, %d\n", vers1);
    m_baro->control1(dt);
    m_thermo->control1(dt);
 
@@ -95,7 +96,7 @@ void BasicIntegrator::dynamic(int istep, time_prec dt)
    m_prop->rattleSave();
 
    m_baro->control3(dt);
-
+   //MDIEngine::mdiprint("SAVING POTENTIAL ENERGY IN dynamic2, %f\n", esum);
    this->plan(istep);
    if (nrespa == 1) {
       m_prop->pos(dt);
@@ -127,10 +128,13 @@ void BasicIntegrator::dynamic(int istep, time_prec dt)
             }
          }
       }
+      
       m_prop->pos(dta);
       m_prop->rattle(dt);
       copyPosToXyz(true);
       MDIEngine::run_mdi("@COORDS");
+      MDIEngine::mdiprint("At3 POTENTIAL ENERGY IN dynamic, %f\n", esum);
+      MDIEngine::mdiprint("AT3  VERS IN dynamic, %d\n", vers1);
 
       // fast force
       energy(vers1, RESPA_FAST, respaTSConfig());
@@ -148,7 +152,7 @@ void BasicIntegrator::dynamic(int istep, time_prec dt)
                vir_fast[iv] += hc_vir[iv];
          }
       }
-
+      //MDIEngine::mdiprint("SAVING POTENTIAL ENERGY IN dynamic4, %f\n", esum);
       // slow force
       energy(vers1, RESPA_SLOW, respaTSConfig());
       darray::copy(g::q0, n, gx2, gx);
@@ -167,6 +171,7 @@ void BasicIntegrator::dynamic(int istep, time_prec dt)
          }
       }
       MDIEngine::run_mdi("@FORCES");
+      //MDIEngine::mdiprint("SAVING POTENTIAL ENERGY IN dynamic5, %f\n", esum);
    }
 
    m_baro->control4(dt);
@@ -180,6 +185,8 @@ void BasicIntegrator::dynamic(int istep, time_prec dt)
 
    m_thermo->control2(dt, save);
    m_baro->control2(dt);
+   MDIEngine::mdiprint("At6 POTENTIAL ENERGY IN dynamic6, %f\n", esum);
+   MDIEngine::mdiprint("AT6  VERS IN dynamic, %d\n", vers1);
 }
 }
 

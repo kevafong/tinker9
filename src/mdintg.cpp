@@ -12,6 +12,9 @@
 #include <tinker/detail/inform.hh>
 #include <tinker/detail/mdstuf.hh>
 #include <tinker/detail/units.hh>
+#include "ff/energy.h"
+#include "mdi.h"
+#include "md/mdiengine.h"
 
 #include <cassert>
 
@@ -154,9 +157,10 @@ void mdPropagate(int nsteps, time_prec dt_ps)
 {
    for (int istep = 1; istep <= nsteps; ++istep) {
       intg->dynamic(istep, dt_ps);
-
+      
       // mdstat
-      bool save = (istep % inform::iwrite == 0);
+      //bool save = (istep % inform::iwrite == 0);
+      bool save = (istep % 10 == 0);
       if (save || (istep % BOUNDS_EVERY_X_STEPS) == 0)
          bounds();
       if (save) {
